@@ -56,7 +56,50 @@ const GLchar *fragmentShaderSource = "#version 410\n"
                                      "color = finalColor;\n"
                                      "}\n\0";
 
-bool rotateX = false, rotateY = false, rotateZ = false;
+bool rotateX, 
+     rotateY, 
+     rotateZ,
+     translateLeft,
+     translateRight,
+     translateIn,
+     translateOut,
+     translateUp,
+     translateDown,
+     scaleUp,
+     scaleDown = false;
+
+float translateDistance = 0.0f;
+float scaleDistance = 1.0f;
+
+enum Direction 
+{   
+  Increase,
+  Decrease
+};
+
+float nextTranslateDistance(Direction dir) {
+  if(dir == Direction::Increase) {
+    return translateDistance > 1.5f ?  -1.5f : translateDistance + 0.01f;
+  } 
+  
+  if(dir == Direction::Decrease) {
+    return translateDistance < -1.5f ? 1.5f : translateDistance - 0.01f;
+  }
+
+  return 0.0f;
+}
+
+float nextScaleDistance(Direction dir) {
+  if(dir == Direction::Increase) {
+    return scaleDistance > 2 ?  1.0f : scaleDistance + 0.01f;
+  } 
+  
+  if(dir == Direction::Decrease) {
+    return scaleDistance < 0 ? 1.0f : scaleDistance - 0.01f;
+  }
+
+  return 0.0f;
+}
 
 // Função MAIN
 int main()
@@ -146,6 +189,49 @@ int main()
     {
       model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
     }
+    else if (translateLeft)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      model = glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
+    }
+    else if (translateRight)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      model = glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
+    }
+    else if (translateUp)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      model = glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
+    }
+    else if (translateDown)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      model = glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
+    }
+    else if (translateIn)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      model = glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
+    }
+    else if (translateOut)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      model = glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
+    }
+    else if (scaleUp)
+    {
+      scaleDistance = nextScaleDistance(Direction::Increase);
+      model = glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
+    }
+    else if (scaleDown)
+    {
+      scaleDistance = nextScaleDistance(Direction::Decrease);
+      model = glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
+    }
+
+
+    
 
     glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
     // Chamada de desenho - drawcall
@@ -178,25 +264,19 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
 
-  if (key == GLFW_KEY_X && action == GLFW_PRESS)
+  if (action == GLFW_PRESS)
   {
-    rotateX = true;
-    rotateY = false;
-    rotateZ = false;
-  }
-
-  if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-  {
-    rotateX = false;
-    rotateY = true;
-    rotateZ = false;
-  }
-
-  if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-  {
-    rotateX = false;
-    rotateY = false;
-    rotateZ = true;
+    rotateX = key == GLFW_KEY_X;
+    rotateY = key == GLFW_KEY_Y;
+    rotateZ = key == GLFW_KEY_Z;
+    translateLeft = key == GLFW_KEY_A;
+    translateRight = key == GLFW_KEY_D;
+    translateIn = key == GLFW_KEY_W;
+    translateOut = key == GLFW_KEY_S;
+    translateUp = key == GLFW_KEY_UP;
+    translateDown = key == GLFW_KEY_DOWN;
+    scaleUp = key == GLFW_KEY_RIGHT_BRACKET;
+    scaleDown = key == GLFW_KEY_LEFT_BRACKET;
   }
 }
 
