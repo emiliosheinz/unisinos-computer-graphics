@@ -1,3 +1,3 @@
 # 3d-cubes
 
-![video of the app running](./docs/video.mov)
+<img src="./docs/video.gif" width="100%">
