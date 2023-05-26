@@ -1,3 +1,3 @@
 # 3d-obj
 
-![image of the app running](./docs/app.gif)
+<img src="./docs/app.gif" width="100%">
