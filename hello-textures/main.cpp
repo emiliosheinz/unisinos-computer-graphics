@@ -55,7 +55,7 @@ int main()
 
 	Shader shader("./shaders/sprite.vs", "./shaders/sprite.fs");
 
-	GLuint texID = loadTexture("./textures/mario.png");
+	GLuint texID = loadTexture("./textures/music.png");
 
 	GLuint VAO = setupSprite();
 
