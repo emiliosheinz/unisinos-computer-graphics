@@ -4,5 +4,6 @@
     "vector": "cpp",
     "fstream": "cpp",
     "ctime": "cpp"
-  }
+  },
+  "cSpell.words": ["Dloadproc", "glfw", "OPENGL"]
 }
