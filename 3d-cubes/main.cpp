@@ -100,6 +100,73 @@ float nextScaleDistance(Direction dir) {
   return 0.0f;
 }
 
+glm::mat4 calculateTransformations(glm::mat4 model, float angle) {
+  if (rotateX)
+    {
+      return glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
+    }
+    
+    if (rotateY)
+    {
+       return glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    
+    if (rotateZ)
+    {
+      return glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    }
+    
+    if (translateLeft)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      return glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
+    }
+    
+    if (translateRight)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      return glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
+    }
+    
+    if (translateUp)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      return glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
+    }
+    
+    if (translateDown)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      return glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
+    }
+    
+    if (translateIn)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      return glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
+    }
+    
+    if (translateOut)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      return glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
+    }
+    
+    if (scaleUp)
+    {
+      scaleDistance = nextScaleDistance(Direction::Increase);
+      return glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
+    }
+    
+    if (scaleDown)
+    {
+      scaleDistance = nextScaleDistance(Direction::Decrease);
+      return glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
+    }
+
+    return model;
+}
+
 // Função MAIN
 int main()
 {
@@ -176,76 +243,23 @@ int main()
     float angle = (GLfloat)glfwGetTime();
 
     model = glm::mat4(1);
-    if (rotateX)
-    {
-      model = glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
-    }
-    else if (rotateY)
-    {
-      model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-    }
-    else if (rotateZ)
-    {
-      model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-    }
-    else if (translateLeft)
-    {
-      translateDistance = nextTranslateDistance(Direction::Decrease);
-      model = glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
-    }
-    else if (translateRight)
-    {
-      translateDistance = nextTranslateDistance(Direction::Increase);
-      model = glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
-    }
-    else if (translateUp)
-    {
-      translateDistance = nextTranslateDistance(Direction::Increase);
-      model = glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
-    }
-    else if (translateDown)
-    {
-      translateDistance = nextTranslateDistance(Direction::Decrease);
-      model = glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
-    }
-    else if (translateIn)
-    {
-      translateDistance = nextTranslateDistance(Direction::Increase);
-      model = glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
-    }
-    else if (translateOut)
-    {
-      translateDistance = nextTranslateDistance(Direction::Decrease);
-      model = glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
-    }
-    else if (scaleUp)
-    {
-      scaleDistance = nextScaleDistance(Direction::Increase);
-      model = glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
-    }
-    else if (scaleDown)
-    {
-      scaleDistance = nextScaleDistance(Direction::Decrease);
-      model = glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
-    }
-
-
-    
-
+    model = calculateTransformations(model, angle);
+    model = glm::translate(model, glm::vec3(-0.5f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
     glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
-    // Chamada de desenho - drawcall
-    // Poligono Preenchido - GL_TRIANGLES
-
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36 * 2);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    // Chamada de desenho - drawcall
-    // CONTORNO - GL_LINE_LOOP
+    model = glm::mat4(1);
+    model = calculateTransformations(model, angle);
+    model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+    glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    glDrawArrays(GL_POINTS, 0, 36 * 2);
     glBindVertexArray(0);
 
-    // Troca os buffers da tela
     glfwSwapBuffers(window);
   }
   // Pede pra OpenGL desalocar os buffers
@@ -346,111 +360,63 @@ int setupGeometry()
   GLfloat vertices[] = {
       // First Cube front
       // x    y    z    r    g    b
-      -0.5, -0.5, 0.125, 1.0, 0.0, 1.0,
-      -0.5, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.5, 0.125, 0.0, 1.0, 1.0,
-      -0.5, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.25, 0.125, 1.0, 0.0, 1.0,
-      -0.25, -0.5, 0.125, 0.0, 1.0, 1.0,
+      -0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
+      0.5, -0.5, 0.5, 1.0, 1.0, 0.0,
+      0.5, 0.5, 0.5, 0.0, 1.0, 1.0,
+
+      0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
+      -0.5, 0.5, 0.5, 1.0, 1.0, 0.0,
+      -0.5, -0.5, 0.5, 0.0, 1.0, 1.0,
 
       // First Cube back
       // x    y    z    r    g    b
-      -0.5, -0.5, -0.125, 1.0, 0.0, 1.0,
-      -0.5, -0.25, -0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.5, -0.125, 0.0, 1.0, 1.0,
-      -0.5, -0.25, -0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.25, -0.125, 1.0, 0.0, 1.0,
-      -0.25, -0.5, -0.125, 0.0, 1.0, 1.0,
+      -0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
+      0.5, -0.5, -0.5, 1.0, 1.0, 0.0,
+      0.5, 0.5, -0.5, 0.0, 1.0, 1.0,
+
+      0.5, 0.5, -0.5, 1.0, 0.0, 0.0,
+      -0.5, 0.5, -0.5, 1.0, 1.0, 0.0,
+      -0.5, -0.5, -0.5, 0.0, 1.0, 1.0,
 
       // First Cube left
       // x    y    z    r    g    b
-      -0.5, -0.5, 0.125, 1.0, 0.0, 1.0,
-      -0.5, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.5, -0.5, -0.125, 0.0, 1.0, 1.0,
-      -0.5, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.5, -0.25, -0.125, 1.0, 0.0, 1.0,
-      -0.5, -0.5, -0.125, 0.0, 1.0, 1.0,
+      -0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
+      -0.5, -0.5, 0.5, 1.0, 1.0, 0.0,
+      -0.5, 0.5, 0.5, 0.0, 1.0, 1.0,
+
+      -0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
+      -0.5, 0.5, -0.5, 1.0, 1.0, 0.0,
+      -0.5, -0.5, -0.5, 0.0, 1.0, 1.0,
 
       // First Cube right
       // x    y    z    r    g    b
-      -0.25, -0.5, 0.125, 1.0, 0.0, 1.0,
-      -0.25, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.5, -0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.25, -0.125, 1.0, 0.0, 1.0,
-      -0.25, -0.5, -0.125, 0.0, 1.0, 1.0,
+      0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
+      0.5, -0.5, 0.5, 0.0, 1.0, 0.0,
+      0.5, 0.5, 0.5, 0.0, 1.0, 1.0,
+
+      0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
+      0.5, 0.5, -0.5, 1.0, 1.0, 0.0,
+      0.5, -0.5, -0.5, 0.0, 1.0, 1.0,
 
       // First Cube top
       // x    y    z    r    g    b
-      -0.5, -0.25, 0.125, 1.0, 0.0, 1.0,
-      -0.25, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.5, -0.25, -0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.25, 0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.25, -0.125, 1.0, 0.0, 1.0,
-      -0.5, -0.25, -0.125, 0.0, 1.0, 1.0,
+      -0.5, 0.5, -0.5, 1.0, 0.0, 0.0,
+      0.5, 0.5, -0.5, 1.0, 1.0, 0.0,
+      0.5, 0.5, 0.5, 0.0, 1.0, 1.0,
+
+      0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
+      -0.5, 0.5, 0.5, 1.0, 1.0, 0.0,
+      -0.5, 0.5, -0.5, 0.0, 1.0, 1.0,
 
       // First Cube bottom
       // x    y    z    r    g    b
-      -0.5, -0.5, 0.125, 1.0, 0.0, 1.0,
-      -0.25, -0.5, 0.125, 0.0, 1.0, 1.0,
-      -0.5, -0.5, -0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.5, 0.125, 0.0, 1.0, 1.0,
-      -0.25, -0.5, -0.125, 1.0, 0.0, 1.0,
-      -0.5, -0.5, -0.125, 0.0, 1.0, 1.0,
+      -0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
+      0.5, -0.5, -0.5, 1.0, 1.0, 0.0,
+      0.5, -0.5, 0.5, 0.0, 1.0, 1.0,
 
-      // Second Cube front 
-      // x    y    z    r    g    b
-      0.25, 0.0, 0.0, 1.0, 0.0, 1.0,
-      0.25, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.5, 0.0, 0.0, 0.0, 1.0, 1.0,
-      0.25, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.5, 0.25, 0.0, 1.0, 0.0, 1.0,
-      0.5, 0.0, 0.0, 0.0, 1.0, 1.0,
-
-      // Second Cube back
-      // x    y    z    r    g    b
-      0.25, 0.0, -0.25, 1.0, 0.0, 1.0,
-      0.25, 0.25, -0.25, 0.0, 1.0, 1.0,
-      0.5, 0.0, -0.25, 0.0, 1.0, 1.0,
-      0.25, 0.25, -0.25, 0.0, 1.0, 1.0,
-      0.5, 0.25, -0.25, 1.0, 0.0, 1.0,
-      0.5, 0.0, -0.25, 0.0, 1.0, 1.0,
-
-      // Second Cube left
-      // x    y    z    r    g    b
-      0.25, 0.0, 0.0, 1.0, 0.0, 1.0,
-      0.25, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.25, 0.0, -0.25, 0.0, 1.0, 1.0,
-      0.25, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.25, 0.25, -0.25, 1.0, 0.0, 1.0,
-      0.25, 0.0, -0.25, 0.0, 1.0, 1.0,
-
-      // Second Cube right
-      // x    y    z    r    g    b
-      0.5, 0.0, 0.0, 1.0, 0.0, 1.0,
-      0.5, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.5, 0.0, -0.25, 0.0, 1.0, 1.0,
-      0.5, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.5, 0.25, -0.25, 1.0, 0.0, 1.0,
-      0.5, 0.0, -0.25, 0.0, 1.0, 1.0,
-
-      // Second Cube top
-      // x    y    z    r    g    b
-      0.25, 0.25, 0.0, 1.0, 0.0, 1.0,
-      0.5, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.25, 0.25, -0.25, 0.0, 1.0, 1.0,
-      0.5, 0.25, 0.0, 0.0, 1.0, 1.0,
-      0.5, 0.25, -0.25, 1.0, 0.0, 1.0,
-      0.25, 0.25, -0.25, 0.0, 1.0, 1.0,
-
-      // Second Cube bottom
-      // x    y    z    r    g    b
-      0.25, 0.0, 0.0, 1.0, 0.0, 1.0,
-      0.5, 0.0, 0.0, 0.0, 1.0, 1.0,
-      0.25, 0.0, -0.25, 0.0, 1.0, 1.0,
-      0.5, 0.0, 0.0, 0.0, 1.0, 1.0,
-      0.5, 0.0, -0.25, 1.0, 0.0, 1.0,
-      0.25, 0.0, -0.25, 0.0, 1.0, 1.0,
+      0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
+      -0.5, -0.5, 0.5, 1.0, 1.0, 0.0,
+      -0.5, -0.5, -0.5, 0.0, 1.0, 1.0,
     };
 
   

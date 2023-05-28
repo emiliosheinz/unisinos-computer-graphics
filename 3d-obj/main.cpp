@@ -234,9 +234,6 @@ int main()
       model = glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
     }
 
-
-    
-
     glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
     // Chamada de desenho - drawcall
     // Poligono Preenchido - GL_TRIANGLES
