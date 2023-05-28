@@ -34,7 +34,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
 // Protótipos das funções
 int setupShader();
-int setupGeometry();
+int setupGeometry(int *verticesCount);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
@@ -105,6 +105,73 @@ float nextScaleDistance(Direction dir) {
   return 0.0f;
 }
 
+glm::mat4 calculateTransformations(glm::mat4 model, float angle) {
+  if (rotateX)
+    {
+      return glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
+    }
+    
+    if (rotateY)
+    {
+       return glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    
+    if (rotateZ)
+    {
+      return glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    }
+    
+    if (translateLeft)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      return glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
+    }
+    
+    if (translateRight)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      return glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
+    }
+    
+    if (translateUp)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      return glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
+    }
+    
+    if (translateDown)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      return glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
+    }
+    
+    if (translateIn)
+    {
+      translateDistance = nextTranslateDistance(Direction::Increase);
+      return glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
+    }
+    
+    if (translateOut)
+    {
+      translateDistance = nextTranslateDistance(Direction::Decrease);
+      return glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
+    }
+    
+    if (scaleUp)
+    {
+      scaleDistance = nextScaleDistance(Direction::Increase);
+      return glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
+    }
+    
+    if (scaleDown)
+    {
+      scaleDistance = nextScaleDistance(Direction::Decrease);
+      return glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
+    }
+
+    return model;
+}
+
 // Função MAIN
 int main()
 {
@@ -152,8 +219,8 @@ int main()
   // Compilando e buildando o programa de shader
   GLuint shaderID = setupShader();
 
-  // Gerando um buffer simples, com a geometria de um triângulo
-  GLuint VAO = setupGeometry();
+  int verticesCount;
+  GLuint VAO = setupGeometry(&verticesCount);
 
   glUseProgram(shaderID);
 
@@ -181,70 +248,11 @@ int main()
     float angle = (GLfloat)glfwGetTime();
 
     model = glm::mat4(1);
-    if (rotateX)
-    {
-      model = glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
-    }
-    else if (rotateY)
-    {
-      model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-    }
-    else if (rotateZ)
-    {
-      model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-    }
-    else if (translateLeft)
-    {
-      translateDistance = nextTranslateDistance(Direction::Decrease);
-      model = glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
-    }
-    else if (translateRight)
-    {
-      translateDistance = nextTranslateDistance(Direction::Increase);
-      model = glm::translate(model, glm::vec3(translateDistance, 0.0f, 0.0f));
-    }
-    else if (translateUp)
-    {
-      translateDistance = nextTranslateDistance(Direction::Increase);
-      model = glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
-    }
-    else if (translateDown)
-    {
-      translateDistance = nextTranslateDistance(Direction::Decrease);
-      model = glm::translate(model, glm::vec3(0.0f, translateDistance, 0.0f));
-    }
-    else if (translateIn)
-    {
-      translateDistance = nextTranslateDistance(Direction::Increase);
-      model = glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
-    }
-    else if (translateOut)
-    {
-      translateDistance = nextTranslateDistance(Direction::Decrease);
-      model = glm::translate(model, glm::vec3(0.0f, 0.0f, translateDistance));
-    }
-    else if (scaleUp)
-    {
-      scaleDistance = nextScaleDistance(Direction::Increase);
-      model = glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
-    }
-    else if (scaleDown)
-    {
-      scaleDistance = nextScaleDistance(Direction::Decrease);
-      model = glm::scale(model, glm::vec3(scaleDistance, scaleDistance, scaleDistance));
-    }
-
+    model  = calculateTransformations(model, angle);
     glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
-    // Chamada de desenho - drawcall
-    // Poligono Preenchido - GL_TRIANGLES
-
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-
-    // Chamada de desenho - drawcall
-    // CONTORNO - GL_LINE_LOOP
-
-    glDrawArrays(GL_POINTS, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, verticesCount);
+    // glDrawArrays(GL_POINTS, 0, verticesCount);
     glBindVertexArray(0);
 
     // Troca os buffers da tela
@@ -333,14 +341,20 @@ int setupShader()
   return shaderProgram;
 }
 
+struct Vertex {
+    float x, y, z;
+};
+
+struct Face {
+    int vertexIndices[3];
+};
 
 
 std::vector<float> parseOBJFile(const std::string& filename) {
     std::ifstream file(filename);
     std::string line;
-    std::vector<float> vertices;
-    std::vector<float> resultVertices;
-    std::vector<int> faces;
+    std::vector<Face> faces;
+    std::vector<Vertex> vertices;
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
@@ -348,39 +362,50 @@ std::vector<float> parseOBJFile(const std::string& filename) {
         iss >> prefix;
 
         if (prefix == "v") {
-            float x, y, z;
-            iss >> x >> y >> z;
-            std::cout << "v" << x << " " << y << " " << z << std::endl;
-            vertices.push_back(x);
-            vertices.push_back(y);
-            vertices.push_back(z);
+            Vertex vertex;
+            iss >> vertex.x >> vertex.y >> vertex.z;
+            vertices.push_back(vertex);
         }
         else if (prefix == "f") {
-            int v1, v2, v3;
-            iss >> v1 >> v2 >> v3;
-            std::cout << "f" << v1 << " " << v2 << " " << v3 << std::endl;
-            faces.push_back(v1);
-            faces.push_back(v2);
-            faces.push_back(v3);
+            Face face;
+
+            for (int i = 0; i < 3; ++i) {
+                std::string faceIndexStr;
+                iss >> faceIndexStr;
+
+                std::istringstream faceIndexStream(faceIndexStr);
+                std::string vertexIndexStr;
+                std::getline(faceIndexStream, vertexIndexStr, '/');
+
+                face.vertexIndices[i] = std::stoi(vertexIndexStr);
+            }
+
+            faces.push_back(face);
         }
     }
 
-    for(int i = 0; i < faces.size(); i++) {
-        int index = faces[i] - 1;
-        resultVertices.push_back(vertices[index * 3]);
-        resultVertices.push_back(vertices[index * 3 + 1]);
-        resultVertices.push_back(vertices[index * 3 + 2]);
-        resultVertices.push_back(static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
-        resultVertices.push_back(static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
-        resultVertices.push_back(static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
+    std::vector<float> result;
+
+    for (const Face& face : faces) {
+      for (const int& vertexIndex : face.vertexIndices) {
+        const Vertex& vertex = vertices[vertexIndex - 1];
+        result.push_back(vertex.x);
+        result.push_back(vertex.y);
+        result.push_back(vertex.z);
+        // random number between 0.1 and 0.3
+        float random = ((float) rand() / (RAND_MAX)) * 0.5 + 0.3;
+        result.push_back(random);
+        result.push_back(random);
+        result.push_back(random);
+      }
     }
 
-    return resultVertices;
+    return result;
 }
 
-int setupGeometry()
+int setupGeometry(int *verticesCount)
 {
-  std::vector<float> vertices = parseOBJFile("cube.obj");
+  std::vector<float> vertices = parseOBJFile("suzanne.obj");
 
   GLuint VBO, VAO;
 
@@ -423,5 +448,7 @@ int setupGeometry()
   // Desvincula o VAO (é uma boa prática desvincular qualquer buffer ou array para evitar bugs medonhos)
   glBindVertexArray(0);
 
+  // Dividimos por 6 pois cada vértice tem 6 floats (3 coordenadas + 3 cores)
+  *verticesCount = vertices.size() / 6;
   return VAO;
 }
