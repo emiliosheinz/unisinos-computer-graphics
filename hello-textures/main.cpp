@@ -31,13 +31,39 @@ using namespace std;
 
 #include "stb_image.h"
 
-// Protótipo da função de callback de teclado
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
+const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
+const string OBJ_FILE_PATH=  ASSETS_FOLDER + "SuzanneTriTextured.obj";
 
-// Protótipos das funções
+struct Geometry {
+  GLuint VAO;
+  int verticesCount;
+};
+
+struct Vertex {
+    float x, y, z;
+};
+
+struct TextureCoord {
+    float s, t;
+};
+
+struct Face {
+    std::vector<int> vertexIndices;
+		std::vector<int> textureCoordIndices;
+};
+
+struct ParsedObj {
+    std::vector<float> vertices;
+    std::string mtlFileName;
+};
+
+// Protótipo da função de callback de teclado
 int setupShader();
-int setupGeometry(int *verticesCount);
-int loadTexture(string path);
+int loadTexture(string mtlPath);
+ParsedObj parseOBJFile(const std::string& mtlPath);
+string getTexturePath(const std::string& mtlFileName);
+Geometry setupGeometry(const std::vector<float> &vertices);
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
@@ -100,6 +126,24 @@ glm::mat4 calculateTransformations(glm::mat4 model, float angle) {
     return model;
 }
 
+const std::string WHITESPACE = " \n\r\t\f\v";
+ 
+std::string ltrim(const std::string &s)
+{
+    size_t start = s.find_first_not_of(WHITESPACE);
+    return (start == std::string::npos) ? "" : s.substr(start);
+}
+ 
+std::string rtrim(const std::string &s)
+{
+    size_t end = s.find_last_not_of(WHITESPACE);
+    return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+}
+ 
+std::string trim(const std::string &s) {
+    return rtrim(ltrim(s));
+}
+
 // Função MAIN
 int main()
 {
@@ -144,15 +188,17 @@ int main()
   glfwGetFramebufferSize(window, &width, &height);
   glViewport(0, 0, width, height);
 
-  // Compilando e buildando o programa de shader
+  ParsedObj parsedObj = parseOBJFile(OBJ_FILE_PATH);
+  string texturePath = getTexturePath(parsedObj.mtlFileName);
+
+  std::cout << "Texture path: " << texturePath << std::endl;
+
   GLuint shaderID = setupShader();
+	GLuint textureId = loadTexture(texturePath);
+  Geometry geometry = setupGeometry(parsedObj.vertices);
 
-	// TODO pegar dinamicamente
-	// GLuint textureId = loadTexture("../common/3d-models/suzanne/Cube.png");
-	GLuint textureId = loadTexture("../common/3d-models/suzanne/Suzanne.png");
-
-  int verticesCount;
-  GLuint VAO = setupGeometry(&verticesCount);
+  GLuint VAO = geometry.VAO;
+  int verticesCount = geometry.verticesCount;
 
   glUseProgram(shaderID);
 
@@ -273,33 +319,23 @@ int setupShader()
   return shaderProgram;
 }
 
-struct Vertex {
-    float x, y, z;
-};
 
-struct TextureCoord {
-    float s, t;
-};
-
-struct Face {
-    std::vector<int> vertexIndices;
-		std::vector<int> textureCoordIndices;
-};
-
-
-std::vector<float> parseOBJFile(const std::string& filename) {
+ParsedObj parseOBJFile(const std::string& filename) {
     std::ifstream file(filename);
     std::string line;
     std::vector<Vertex> vertices;
     std::vector<TextureCoord> textureCoords;
     std::vector<Face> faces;
+    std::string mtlFileName;
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
         std::string prefix;
         iss >> prefix;
 
-        if (prefix == "v") {
+        if (prefix == "mtllib") {
+            iss >> mtlFileName;
+        } else if (prefix == "v") {
             Vertex vertex;
             iss >> vertex.x >> vertex.y >> vertex.z;
             vertices.push_back(vertex);
@@ -346,14 +382,32 @@ std::vector<float> parseOBJFile(const std::string& filename) {
         }
     }
 
-    return result;
+    ParsedObj parsedObj;
+    parsedObj.vertices = result;
+    parsedObj.mtlFileName = mtlFileName;
+
+    return parsedObj;
 }
 
-int setupGeometry(int *verticesCount)
+string getTexturePath(const std::string& mtlFileName)
 {
-  std::vector<float> vertices = parseOBJFile("../common/3d-models/suzanne/SuzanneTriTextured.obj");
-	// std::vector<float> vertices = parseOBJFile("../common/3d-models/suzanne/CubeTextured.obj");
+    std::ifstream file(ASSETS_FOLDER + mtlFileName);
+    std::string line;
+    std::string fileName;
 
+    while (std::getline(file, line)) {
+        if (line.find("map_Kd") != std::string::npos) {
+            size_t pos = line.find_last_of(" ");
+            fileName = line.substr(pos + 1);
+            break;
+        }
+    }
+
+    return ASSETS_FOLDER + trim(fileName);
+}
+
+Geometry setupGeometry(const std::vector<float> &vertices)
+{
   GLuint VBO, VAO;
 
   // Geração do identificador do VBO
@@ -400,8 +454,12 @@ int setupGeometry(int *verticesCount)
   glBindVertexArray(0);
 
   // Dividimos por 6 pois cada vértice tem 6 floats (3 coordenadas + 3 cores)
-  *verticesCount = vertices.size() / 8;
-  return VAO;
+  int verticesCount = vertices.size() / 8;
+
+  return {
+    VAO,
+    verticesCount,
+  };
 }
 
 int loadTexture(string path)
