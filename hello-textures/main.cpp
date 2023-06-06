@@ -190,9 +190,7 @@ int main()
 
   ParsedObj parsedObj = parseOBJFile(OBJ_FILE_PATH);
   string texturePath = getTexturePath(parsedObj.mtlFileName);
-
-  std::cout << "Texture path: " << texturePath << std::endl;
-
+  
   GLuint shaderID = setupShader();
 	GLuint textureId = loadTexture(texturePath);
   Geometry geometry = setupGeometry(parsedObj.vertices);
