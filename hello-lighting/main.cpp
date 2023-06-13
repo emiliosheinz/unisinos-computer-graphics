@@ -30,6 +30,7 @@ using namespace std;
 #include <glm/gtc/type_ptr.hpp>
 
 #include "stb_image.h"
+#include "Shader.h"
 
 const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
 const string OBJ_FILE_PATH=  ASSETS_FOLDER + "SuzanneTriTextured.obj";
@@ -62,8 +63,6 @@ struct ParsedObj {
     std::string mtlFileName;
 };
 
-// Protótipo da função de callback de teclado
-int setupShader();
 int loadTexture(string mtlPath);
 ParsedObj parseOBJFile(const std::string& mtlPath);
 string getTexturePath(const std::string& mtlFileName);
@@ -72,33 +71,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
-
-// Código fonte do Vertex Shader (em GLSL): ainda hardcoded
-const GLchar *vertexShaderSource = "#version 410\n"
-                                   "layout (location = 0) in vec3 position;\n"
-                                   "layout (location = 1) in vec3 color;\n"
-                                   "layout (location = 2) in vec2 tex_coord;\n"
-                                   "out vec4 vertexColor;\n"
-                                   "out vec2 texCoord;\n"
-                                   "uniform mat4 model;\n"
-                                   "void main()\n"
-                                   "{\n"
-                                   //...pode ter mais linhas de código aqui!
-                                   "gl_Position = model * vec4(position, 1.0);\n"
-                                   "vertexColor = vec4(color, 1.0);\n"
-																	 "texCoord = vec2(tex_coord.x, 1 - tex_coord.y);\n"
-                                   "}\0";
-
-// Códifo fonte do Fragment Shader (em GLSL): ainda hardcoded
-const GLchar *fragmentShaderSource = "#version 410\n"
-                                     "in vec4 vertexColor;\n"
-                                     "in vec2 texCoord;\n"
-																		 "out vec4 color;\n"
-																		 "uniform sampler2D tex_buffer;\n"
-                                     "void main()\n"
-                                     "{\n"
-                                     "color = texture(tex_buffer, texCoord);\n"
-                                     "}\n\0";
 
 bool rotateX, 
      rotateY, 
@@ -196,19 +168,20 @@ int main()
   ParsedObj parsedObj = parseOBJFile(OBJ_FILE_PATH);
   string texturePath = getTexturePath(parsedObj.mtlFileName);
   
-  GLuint shaderID = setupShader();
+  Shader shader("vertex-shader.vert", "fragment-shader.frag");
+
 	GLuint textureId = loadTexture(texturePath);
   Geometry geometry = setupGeometry(parsedObj.vertices);
 
   GLuint VAO = geometry.VAO;
   int verticesCount = geometry.verticesCount;
 
-  glUseProgram(shaderID);
+  glUseProgram(shader.ID);
 
-	glUniform1i(glGetUniformLocation(shaderID, "tex_buffer"), 0);
+	glUniform1i(glGetUniformLocation(shader.ID, "tex_buffer"), 0);
 
   glm::mat4 model = glm::mat4(1); // matriz identidade;
-  GLint modelLoc = glGetUniformLocation(shaderID, "model");
+  GLint modelLoc = glGetUniformLocation(shader.ID, "model");
   //
   model = glm::rotate(model, /*(GLfloat)glfwGetTime()*/ glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
   glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
@@ -268,58 +241,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     rotateY = key == GLFW_KEY_Y;
     rotateZ = key == GLFW_KEY_Z;
   }
-}
-
-// Esta função está basntante hardcoded - objetivo é compilar e "buildar" um programa de
-//  shader simples e único neste exemplo de código
-//  O código fonte do vertex e fragment shader está nos arrays vertexShaderSource e
-//  fragmentShader source no iniçio deste arquivo
-//  A função retorna o identificador do programa de shader
-int setupShader()
-{
-  // Vertex shader
-  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-  glCompileShader(vertexShader);
-  // Checando erros de compilação (exibição via log no terminal)
-  GLint success;
-  GLchar infoLog[512];
-  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-  if (!success)
-  {
-    glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-              << infoLog << std::endl;
-  }
-  // Fragment shader
-  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-  glCompileShader(fragmentShader);
-  // Checando erros de compilação (exibição via log no terminal)
-  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-  if (!success)
-  {
-    glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
-              << infoLog << std::endl;
-  }
-  // Linkando os shaders e criando o identificador do programa de shader
-  GLuint shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-  // Checando por erros de linkagem
-  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-  if (!success)
-  {
-    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
-              << infoLog << std::endl;
-  }
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
-
-  return shaderProgram;
 }
 
 
