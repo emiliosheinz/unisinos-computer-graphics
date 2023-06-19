@@ -1,12 +1,3 @@
-/* Hello Triangle - código adaptado de https://learnopengl.com/#!Getting-started/Hello-Triangle
- *
- * Adaptado por Rossana Baptista Queiroz
- * para a disciplina de Processamento Gráfico - Jogos Digitais - Unisinos
- * Versão inicial: 7/4/2017
- * Última atualização em 12/05/2023
- *
- */
-
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -124,22 +115,12 @@ std::string trim(const std::string &s) {
 // Função MAIN
 int main()
 {
-  // Inicialização da GLFW
   glfwInit();
 
-  // Muita atenção aqui: alguns ambientes não aceitam essas configurações
-  // Você deve adaptar para a versão do OpenGL suportada por sua placa
-  // Sugestão: comente essas linhas de código para desobrir a versão e
-  // depois atualize (por exemplo: 4.5 com 4 e 5)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-  // Essencial para computadores da Apple
-  // #ifdef __APPLE__
-  //	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  // #endif
 
   // Criação da janela GLFW
   GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "3D Cubes", nullptr, nullptr);
@@ -181,12 +162,26 @@ int main()
 	glUniform1i(glGetUniformLocation(shader.ID, "tex_buffer"), 0);
 
   glm::mat4 model = glm::mat4(1); // matriz identidade;
-  GLint modelLoc = glGetUniformLocation(shader.ID, "model");
-  //
-  model = glm::rotate(model, /*(GLfloat)glfwGetTime()*/ glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-  glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
+  
+	glm::mat4 view = glm::lookAt(glm::vec3(0.0, 0.0, 3.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+	shader.setMat4("view", value_ptr(view));
+	
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+	shader.setMat4("projection", glm::value_ptr(projection));
 
-  glEnable(GL_DEPTH_TEST);
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	shader.setMat4("model", glm::value_ptr(model));
+
+	shader.setFloat("ka", 0.35);
+	shader.setFloat("kd", 0.35);
+	shader.setFloat("ks", 0.6);
+	shader.setFloat("q", 15);
+
+	//Definindo as propriedades da fonte de luz
+	shader.setVec3("lightPosition", 0.0f, 20.0f, -5.0f);
+	shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
+	glEnable(GL_DEPTH_TEST);
 
   // Loop da aplicação - "game loop"
   while (!glfwWindowShouldClose(window))
@@ -195,7 +190,7 @@ int main()
     glfwPollEvents();
 
     // Limpa o buffer de cor
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // cor de fundo
+    glClearColor(0.08f, 0.08f, 0.08f, 1.0f); // cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLineWidth(10);
@@ -204,9 +199,9 @@ int main()
     float angle = (GLfloat)glfwGetTime();
 
     model = glm::mat4(1);
-		model = glm::scale(model, glm::vec3(0.3, 0.3, 0.3));
+		model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
     model  = calculateTransformations(model, angle);
-    glUniformMatrix4fv(modelLoc, 1, false, glm::value_ptr(model));
+    shader.setMat4("model", glm::value_ptr(model));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textureId);
@@ -302,19 +297,21 @@ ParsedObj parseOBJFile(const std::string& filename) {
             const Vertex& vertex = vertices[face.vertexIndices[i]];
 						const TextureCoord& texture = textureCoords[face.textureCoordIndices[i]];
             const Normal& normal = normals[face.normalIndices[i]];
-            std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
-
 
 						result.push_back(vertex.x);
 						result.push_back(vertex.y);
 						result.push_back(vertex.z);
 
-						result.push_back(0);
+						result.push_back(1);
 						result.push_back(0);
 						result.push_back(0);
 
 						result.push_back(texture.s);
 						result.push_back(texture.t);
+            
+            result.push_back(normal.x);
+            result.push_back(normal.y);
+            result.push_back(normal.z);
         }
     }
 
@@ -371,16 +368,20 @@ Geometry setupGeometry(const std::vector<float> &vertices)
   //  Deslocamento a partir do byte zero
 
   // Atributo posição (x, y, z)
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)0);
   glEnableVertexAttribArray(0);
 
   // Atributo cor (r, g, b)
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)(3 * sizeof(GLfloat)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)(3 * sizeof(GLfloat)));
   glEnableVertexAttribArray(1);
 
-	 // Atributo texture (s, t)
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)(6 * sizeof(GLfloat)));
+	// Atributo texture (s, t)
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)(6 * sizeof(GLfloat)));
   glEnableVertexAttribArray(2);
+
+  // Atributo normal (nx, ny, nz)
+  glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(8 * sizeof(GLfloat)));
+  glEnableVertexAttribArray(3);
 
   // Observe que isso é permitido, a chamada para glVertexAttribPointer registrou o VBO como o objeto de buffer de vértice
   // atualmente vinculado - para que depois possamos desvincular com segurança
@@ -389,8 +390,8 @@ Geometry setupGeometry(const std::vector<float> &vertices)
   // Desvincula o VAO (é uma boa prática desvincular qualquer buffer ou array para evitar bugs medonhos)
   glBindVertexArray(0);
 
-  // Dividimos por 6 pois cada vértice tem 6 floats (3 coordenadas + 3 cores)
-  int verticesCount = vertices.size() / 8;
+  // Dividimos por 11 pois cada vértice tem 11 floats (3 coordenadas + 3 cores + 2 texturas + 3 normais)
+  int verticesCount = vertices.size() / 11;
 
   return {
     VAO,
