@@ -175,10 +175,10 @@ int main()
 	shader.setFloat("ka", 0.35);
 	shader.setFloat("kd", 0.35);
 	shader.setFloat("ks", 0.6);
-	shader.setFloat("q", 15);
+	shader.setFloat("q", 25);
 
 	//Definindo as propriedades da fonte de luz
-	shader.setVec3("lightPosition", 0.0f, 20.0f, -5.0f);
+	shader.setVec3("lightPosition", 5.0f, 25.0f, 5.0f);
 	shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
 	glEnable(GL_DEPTH_TEST);
