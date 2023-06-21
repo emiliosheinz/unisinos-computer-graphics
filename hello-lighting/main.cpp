@@ -185,11 +185,11 @@ int main()
 	shader.setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
 	shader.setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
 	shader.setVec3("ks", material.specular.r, material.specular.g, material.specular.b);
-	shader.setFloat("q", 25);
+	shader.setFloat("q", material.shininess);
 
 	//Definindo as propriedades da fonte de luz
-	shader.setVec3("lightPosition", 5.0f, 25.0f, 5.0f);
-	shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+	shader.setVec3("lightPosition", -5.0f, 15.0f, 5.0f);
+	shader.setVec3("lightColor", 1.0f, 1.0f, 0.8f);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -365,6 +365,10 @@ Material readMTLFile(const string& mtlFileName) {
             string fileName;
             iss >> fileName;
             material.texturePath = ASSETS_FOLDER + trim(fileName);
+        } else if (keyword == "Ns") {
+            float shininess;
+            iss >> shininess;
+            material.shininess = shininess;
         }
     }
     
