@@ -54,9 +54,19 @@ struct ParsedObj {
     std::string mtlFileName;
 };
 
+struct Material {
+    std::string name;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    string texturePath;
+    float shininess;
+    int textureId;
+};
+
 int loadTexture(string mtlPath);
 ParsedObj parseOBJFile(const std::string& mtlPath);
-string getTexturePath(const std::string& mtlFileName);
+Material readMTLFile(const string& mtlFileName);
 Geometry setupGeometry(const std::vector<float> &vertices);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
@@ -147,11 +157,11 @@ int main()
   glViewport(0, 0, width, height);
 
   ParsedObj parsedObj = parseOBJFile(OBJ_FILE_PATH);
-  string texturePath = getTexturePath(parsedObj.mtlFileName);
+  Material material = readMTLFile(parsedObj.mtlFileName);
   
   Shader shader("vertex-shader.vert", "fragment-shader.frag");
 
-	GLuint textureId = loadTexture(texturePath);
+	GLuint textureId = loadTexture(material.texturePath);
   Geometry geometry = setupGeometry(parsedObj.vertices);
 
   GLuint VAO = geometry.VAO;
@@ -172,9 +182,9 @@ int main()
 	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	shader.setMat4("model", glm::value_ptr(model));
 
-	shader.setFloat("ka", 0.35);
-	shader.setFloat("kd", 0.35);
-	shader.setFloat("ks", 0.6);
+	shader.setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
+	shader.setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
+	shader.setVec3("ks", material.specular.r, material.specular.g, material.specular.b);
 	shader.setFloat("q", 25);
 
 	//Definindo as propriedades da fonte de luz
@@ -322,21 +332,44 @@ ParsedObj parseOBJFile(const std::string& filename) {
     return parsedObj;
 }
 
-string getTexturePath(const std::string& mtlFileName)
-{
-    std::ifstream file(ASSETS_FOLDER + mtlFileName);
-    std::string line;
-    std::string fileName;
+Material readMTLFile(const string& mtlFileName) {
+    Material material;
+    ifstream file(ASSETS_FOLDER + mtlFileName);
 
-    while (std::getline(file, line)) {
-        if (line.find("map_Kd") != std::string::npos) {
-            size_t pos = line.find_last_of(" ");
-            fileName = line.substr(pos + 1);
-            break;
-        }
+    if (!file.is_open()) {
+        cout << "Failed to open file: " << mtlFileName << endl;
+        return material;
     }
 
-    return ASSETS_FOLDER + trim(fileName);
+    string line;
+    while (getline(file, line)) {
+        istringstream iss(line);
+        string keyword;
+        iss >> keyword;
+        if (keyword == "newmtl") {
+            iss >> material.name;
+        } else if (keyword == "Ka") {
+            float r, g, b;
+            iss >> r >> g >> b;
+            material.ambient = glm::vec3(r, g, b);
+        } else if (keyword == "Ks") {
+            float r, g, b;
+            iss >> r >> g >> b;
+            material.specular = glm::vec3(r, g, b);
+        // Kd and Ke are the same according to the MTL specification
+        } else if (keyword == "Kd" || keyword == "Ke") {
+            float r, g, b;
+            iss >> r >> g >> b;
+            material.diffuse = glm::vec3(r, g, b);
+        } else if (keyword == "map_Kd") {
+            string fileName;
+            iss >> fileName;
+            material.texturePath = ASSETS_FOLDER + trim(fileName);
+        }
+    }
+    
+    file.close();
+    return material;
 }
 
 Geometry setupGeometry(const std::vector<float> &vertices)
@@ -358,14 +391,6 @@ Geometry setupGeometry(const std::vector<float> &vertices)
   // Vincula (bind) o VAO primeiro, e em seguida  conecta e seta o(s) buffer(s) de vértices
   // e os ponteiros para os atributos
   glBindVertexArray(VAO);
-
-  // Para cada atributo do vertice, criamos um "AttribPointer" (ponteiro para o atributo), indicando:
-  //  Localização no shader * (a localização dos atributos devem ser correspondentes no layout especificado no vertex shader)
-  //  Numero de valores que o atributo tem (por ex, 3 coordenadas xyz)
-  //  Tipo do dado
-  //  Se está normalizado (entre zero e um)
-  //  Tamanho em bytes
-  //  Deslocamento a partir do byte zero
 
   // Atributo posição (x, y, z)
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)0);

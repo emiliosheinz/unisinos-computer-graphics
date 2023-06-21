@@ -10,11 +10,11 @@ in vec3 fragmentPosition;
 uniform vec3 lightColor;
 uniform vec3 lightPosition;
 // Coeficientes de reflexão
-uniform float ka;
+uniform vec3 ka;
 // Coeficientes de reflexão difusa
-uniform float kd;
+uniform vec3 kd;
 // Coeficientes de reflexão especular
-uniform float ks;
+uniform vec3 ks;
 // Expoente de reflexão especular
 uniform float q;
 
