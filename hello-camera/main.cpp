@@ -22,6 +22,7 @@ using namespace std;
 
 #include "stb_image.h"
 #include "Shader.h"
+#include "camera.h"
 
 const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
 const string OBJ_FILE_PATH = ASSETS_FOLDER + "SuzanneTriTextured.obj";
@@ -76,41 +77,16 @@ ParsedObj parseOBJFile(const std::string &mtlPath);
 Material readMTLFile(const string &mtlFileName);
 Geometry setupGeometry(const std::vector<float> &vertices);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
-
-bool rotateX,
-    rotateY,
-    rotateZ;
-
-float translateDistance = 0.0f;
 
 enum Direction
 {
   Increase,
   Decrease
 };
-
-glm::mat4 calculateTransformations(glm::mat4 model, float angle)
-{
-  if (rotateX)
-  {
-    return glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
-  }
-
-  if (rotateY)
-  {
-    return glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-  }
-
-  if (rotateZ)
-  {
-    return glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-  }
-
-  return model;
-}
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 
@@ -131,7 +107,8 @@ std::string trim(const std::string &s)
   return rtrim(ltrim(s));
 }
 
-// Função MAIN
+Camera camera;
+
 int main()
 {
   glfwInit();
@@ -147,6 +124,9 @@ int main()
 
   // Fazendo o registro da função de callback para a janela GLFW
   glfwSetKeyCallback(window, key_callback);
+  glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // GLAD: carrega todos os ponteiros d funções da OpenGL
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -177,6 +157,8 @@ int main()
   int verticesCount = geometry.verticesCount;
 
   glUseProgram(shader.ID);
+
+  camera.initialize(&shader, width, height);
 
   glUniform1i(glGetUniformLocation(shader.ID, "tex_buffer"), 0);
 
@@ -215,11 +197,12 @@ int main()
     glLineWidth(10);
     glPointSize(20);
 
+    camera.update();
+
     float angle = (GLfloat)glfwGetTime();
 
     model = glm::mat4(1);
     model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    model = calculateTransformations(model, angle);
     shader.setMat4("model", glm::value_ptr(model));
 
     glActiveTexture(GL_TEXTURE0);
@@ -249,13 +232,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
 
-  if (action == GLFW_PRESS)
-  {
-    rotateX = key == GLFW_KEY_X;
-    rotateY = key == GLFW_KEY_Y;
-    rotateZ = key == GLFW_KEY_Z;
-  }
+  camera.move(window, key, action);
 }
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	camera.rotate(window, xpos, ypos);
+}
+
 
 ParsedObj parseOBJFile(const std::string &filename)
 {
