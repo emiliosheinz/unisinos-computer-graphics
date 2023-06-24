@@ -8,3 +8,4 @@
 - [3d-obj](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/3d-obj)
 - [hello-textures](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-textures)
 - [hello-lighting](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-lighting)
+- [hello-camera](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-camera)
