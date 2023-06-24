@@ -7,3 +7,4 @@
 - [3d-cubes](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/3d-cubes)
 - [3d-obj](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/3d-obj)
 - [hello-textures](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-textures)
+- [hello-lighting](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-lighting)
