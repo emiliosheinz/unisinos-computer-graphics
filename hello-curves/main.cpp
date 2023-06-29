@@ -266,13 +266,13 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	camera.rotate(window, xpos, ypos);
 }
 
-
 ParsedObj parseOBJFile(const std::string &filename)
 {
   std::ifstream file(filename);
   std::string line;
   std::vector<Vertex> vertices;
   std::vector<TextureCoord> textureCoords;
+  
   std::vector<Normal> normals;
   std::vector<Face> faces;
   std::string mtlFileName;
