@@ -9,3 +9,4 @@
 - [hello-textures](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-textures)
 - [hello-lighting](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-lighting)
 - [hello-camera](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-camera)
+- [hello-curves](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-curves)
