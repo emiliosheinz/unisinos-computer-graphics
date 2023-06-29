@@ -26,6 +26,9 @@ using namespace std;
 #include "bezier.h"
 #include "mesh.h"
 
+#include "./utils/texture-utils.hpp"
+#include "./utils/string-utils.hpp"
+
 const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
 const string OBJ_FILE_PATH = ASSETS_FOLDER + "SuzanneTriTextured.obj";
 
@@ -74,7 +77,6 @@ struct Material
   int textureId;
 };
 
-int loadTexture(string mtlPath);
 ParsedObj parseOBJFile(const std::string &mtlPath);
 Material readMTLFile(const string &mtlFileName);
 Geometry setupGeometry(const std::vector<float> &vertices);
@@ -84,27 +86,6 @@ vector <glm::vec3> generateControlPointsSet(string path);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
-
-float translateDistance = 0.0f;
-
-const std::string WHITESPACE = " \n\r\t\f\v";
-
-std::string ltrim(const std::string &s)
-{
-  size_t start = s.find_first_not_of(WHITESPACE);
-  return (start == std::string::npos) ? "" : s.substr(start);
-}
-
-std::string rtrim(const std::string &s)
-{
-  size_t end = s.find_last_not_of(WHITESPACE);
-  return (end == std::string::npos) ? "" : s.substr(0, end + 1);
-}
-
-std::string trim(const std::string &s)
-{
-  return rtrim(ltrim(s));
-}
 
 Camera camera;
 
@@ -437,48 +418,7 @@ Geometry setupGeometry(const std::vector<float> &vertices)
   };
 }
 
-int loadTexture(string path)
-{
-  GLuint texID;
 
-  // Gera o identificador da textura na memória
-  glGenTextures(1, &texID);
-  glBindTexture(GL_TEXTURE_2D, texID);
-
-  // Ajusta os parâmetros de wrapping e filtering
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  // Carregamento da imagem
-  int width, height, nrChannels;
-  unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
-
-  if (data)
-  {
-    if (nrChannels == 3) // jpg, bmp
-    {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    }
-    else // png
-    {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    }
-    glGenerateMipmap(GL_TEXTURE_2D);
-  }
-  else
-  {
-    std::cout << "Failed to load texture" << std::endl;
-  }
-
-  stbi_image_free(data);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  return texID;
-}
 
 vector<glm::vec3> generateControlPointsSet(string path)
 {
