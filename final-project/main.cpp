@@ -85,37 +85,7 @@ vector <glm::vec3> generateControlPointsSet(string path);
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
 
-bool rotateX,
-    rotateY,
-    rotateZ;
-
 float translateDistance = 0.0f;
-
-enum Direction
-{
-  Increase,
-  Decrease
-};
-
-glm::mat4 calculateTransformations(glm::mat4 model, float angle)
-{
-  if (rotateX)
-  {
-    return glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
-  }
-
-  if (rotateY)
-  {
-    return glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-  }
-
-  if (rotateZ)
-  {
-    return glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-  }
-
-  return model;
-}
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 
@@ -250,13 +220,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
-
-  if (action == GLFW_PRESS)
-  {
-    rotateX = key == GLFW_KEY_X;
-    rotateY = key == GLFW_KEY_Y;
-    rotateZ = key == GLFW_KEY_Z;
-  }
 
   camera.move(window, key, action);
 }
