@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "start:mac": "rm -rf ./main && clang++ -std=c++11 -stdlib=libc++ -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo -o main main.cpp ../common/lib/curves/bezier.cpp ../common/lib/curves/curve.cpp ../common/lib/glad.c ../common/lib/stb_image.cpp -I include -I/sw/include -I/usr/local/include -I ../common/include -I ../common/include/curves ../common/lib/libglfw3.a && ./main"
+  }
+}
