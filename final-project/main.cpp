@@ -26,7 +26,7 @@ using namespace std;
 #include "bezier.h"
 #include "mesh.h"
 
-#include "./utils/texture-utils.hpp"
+#include "./utils/obj-utils.hpp"
 #include "./utils/string-utils.hpp"
 
 const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
@@ -417,8 +417,6 @@ Geometry setupGeometry(const std::vector<float> &vertices)
       verticesCount,
   };
 }
-
-
 
 vector<glm::vec3> generateControlPointsSet(string path)
 {

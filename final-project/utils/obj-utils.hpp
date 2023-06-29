@@ -4,8 +4,6 @@
 
 using namespace std;
 
-int loadTexture(string mtlPath);
-
 int loadTexture(string path)
 {
   GLuint texID;
