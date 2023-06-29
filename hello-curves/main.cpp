@@ -22,6 +22,9 @@ using namespace std;
 
 #include "stb_image.h"
 #include "Shader.h"
+#include "camera.h"
+#include "bezier.h"
+#include "mesh.h"
 
 const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
 const string OBJ_FILE_PATH = ASSETS_FOLDER + "SuzanneTriTextured.obj";
@@ -76,6 +79,8 @@ ParsedObj parseOBJFile(const std::string &mtlPath);
 Material readMTLFile(const string &mtlFileName);
 Geometry setupGeometry(const std::vector<float> &vertices);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+vector <glm::vec3> generateControlPointsSet(string path);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
@@ -131,7 +136,8 @@ std::string trim(const std::string &s)
   return rtrim(ltrim(s));
 }
 
-// Função MAIN
+Camera camera;
+
 int main()
 {
   glfwInit();
@@ -147,6 +153,9 @@ int main()
 
   // Fazendo o registro da função de callback para a janela GLFW
   glfwSetKeyCallback(window, key_callback);
+  glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // GLAD: carrega todos os ponteiros d funções da OpenGL
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -178,18 +187,10 @@ int main()
 
   glUseProgram(shader.ID);
 
-  glUniform1i(glGetUniformLocation(shader.ID, "tex_buffer"), 0);
-
-  glm::mat4 model = glm::mat4(1); // matriz identidade;
-
-  glm::mat4 view = glm::lookAt(glm::vec3(0.0, 0.0, 3.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-  shader.setMat4("view", value_ptr(view));
-
-  glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-  shader.setMat4("projection", glm::value_ptr(projection));
-
-  model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-  shader.setMat4("model", glm::value_ptr(model));
+  camera.initialize(&shader, width, height);
+  
+  Mesh suzanne;
+  suzanne.initialize(VAO, verticesCount, &shader, textureId);
 
   shader.setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
   shader.setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
@@ -199,6 +200,15 @@ int main()
   // Definindo as propriedades da fonte de luz
   shader.setVec3("lightPosition", 15.0f, 15.0f, 2.0f);
   shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
+  std::vector<glm::vec3> controlPoints = generateControlPointsSet("./animations/wave.txt");
+
+  Bezier bezier;
+	bezier.setControlPoints(controlPoints);
+	bezier.setShader(&shader);
+	bezier.generateCurve(100);
+	int nbCurvePoints = bezier.getNbCurvePoints();
+	int i = 0;
 
   glEnable(GL_DEPTH_TEST);
 
@@ -215,28 +225,20 @@ int main()
     glLineWidth(10);
     glPointSize(20);
 
-    float angle = (GLfloat)glfwGetTime();
+    camera.update();
 
-    model = glm::mat4(1);
-    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    model = calculateTransformations(model, angle);
-    shader.setMat4("model", glm::value_ptr(model));
+		glm::vec3 pointOnCurve = bezier.getPointOnCurve(i);
+		suzanne.updatePosition(pointOnCurve);
+		suzanne.update();
+		suzanne.draw();
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    i = (i + 1) % nbCurvePoints;
 
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, verticesCount);
-    // glDrawArrays(GL_POINTS, 0, verticesCount);
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Troca os buffers da tela
     glfwSwapBuffers(window);
   }
-  // Pede pra OpenGL desalocar os buffers
+
+
   glDeleteVertexArrays(1, &VAO);
-  // Finaliza a execução da GLFW, limpando os recursos alocados por ela
   glfwTerminate();
   return 0;
 }
@@ -255,7 +257,15 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     rotateY = key == GLFW_KEY_Y;
     rotateZ = key == GLFW_KEY_Z;
   }
+
+  camera.move(window, key, action);
 }
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	camera.rotate(window, xpos, ypos);
+}
+
 
 ParsedObj parseOBJFile(const std::string &filename)
 {
@@ -505,4 +515,24 @@ int loadTexture(string path)
   glBindTexture(GL_TEXTURE_2D, 0);
 
   return texID;
+}
+
+vector<glm::vec3> generateControlPointsSet(string path)
+{
+	vector <glm::vec3> controlPoints;
+	string line;
+	ifstream configFile(path);
+
+	while (getline(configFile, line))
+	{
+		istringstream iss(line);
+
+		float x, y, z;
+		iss >> x >> y >> z;
+		controlPoints.push_back(glm::vec3(x, y, z));
+	}
+
+	configFile.close();
+
+	return controlPoints;
 }
