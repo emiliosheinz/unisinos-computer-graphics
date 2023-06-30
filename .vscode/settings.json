@@ -67,5 +67,5 @@
     "algorithm": "cpp",
     "filesystem": "cpp"
   },
-  "cSpell.words": ["Dloadproc", "glfw", "OPENGL"]
+  "cSpell.words": ["Dloadproc", "glfw", "newmtl", "OPENGL"]
 }

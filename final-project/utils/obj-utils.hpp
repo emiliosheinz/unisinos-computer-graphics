@@ -130,25 +130,57 @@ ParsedObj parseOBJFile(const string &filename)
     else if (prefix == "f")
     {
       Face face;
+      vector<string> vertexStrings;
       string vertexString;
 
       while (iss >> vertexString)
       {
-        istringstream vss(vertexString);
-        string vertexIndexString, texCoordIndexString, normalIndexString;
-
-        getline(vss, vertexIndexString, '/');
-        getline(vss, texCoordIndexString, '/');
-        getline(vss, normalIndexString, '/');
-
-        face.vertexIndices.push_back(stoi(vertexIndexString) - 1);
-        if (!texCoordIndexString.empty())
-          face.textureCoordIndices.push_back(stoi(texCoordIndexString) - 1);
-        if (!normalIndexString.empty())
-          face.normalIndices.push_back(stoi(normalIndexString) - 1);
+        vertexStrings.push_back(vertexString);
       }
 
-      faces.push_back(face);
+      if (vertexStrings.size() >= 3)
+      {
+        for (size_t i = 1; i < vertexStrings.size() - 1; ++i)
+        {
+          const string& v0String = vertexStrings[0];
+          const string& v1String = vertexStrings[i];
+          const string& v2String = vertexStrings[i + 1];
+
+          istringstream vss0(v0String);
+          istringstream vss1(v1String);
+          istringstream vss2(v2String);
+
+          string v0IndexString, v0TexCoordString, v0NormalIndexString;
+          string v1IndexString, v1TexCoordString, v1NormalIndexString;
+          string v2IndexString, v2TexCoordString, v2NormalIndexString;
+
+          getline(vss0, v0IndexString, '/');
+          getline(vss0, v0TexCoordString, '/');
+          getline(vss0, v0NormalIndexString, '/');
+
+          getline(vss1, v1IndexString, '/');
+          getline(vss1, v1TexCoordString, '/');
+          getline(vss1, v1NormalIndexString, '/');
+
+          getline(vss2, v2IndexString, '/');
+          getline(vss2, v2TexCoordString, '/');
+          getline(vss2, v2NormalIndexString, '/');
+
+          face.vertexIndices.push_back(stoi(v0IndexString) - 1);
+          face.textureCoordIndices.push_back(stoi(v0TexCoordString) - 1);
+          face.normalIndices.push_back(stoi(v0NormalIndexString) - 1);
+
+          face.vertexIndices.push_back(stoi(v1IndexString) - 1);
+          face.textureCoordIndices.push_back(stoi(v1TexCoordString) - 1);
+          face.normalIndices.push_back(stoi(v1NormalIndexString) - 1);
+
+          face.vertexIndices.push_back(stoi(v2IndexString) - 1);
+          face.textureCoordIndices.push_back(stoi(v2TexCoordString) - 1);
+          face.normalIndices.push_back(stoi(v2NormalIndexString) - 1);
+        }
+
+        faces.push_back(face);
+      }
     }
   }
 
@@ -186,60 +218,77 @@ ParsedObj parseOBJFile(const string &filename)
   return parsedObj;
 }
 
-Material readMTLFile(const string &assetsFolder, const string &mtlFileName)
+vector<Material> readMTLFile(const string &assetsFolder, const string &mtlFileName)
 {
-  Material material;
+  vector<Material> materials;
   ifstream file(assetsFolder + mtlFileName);
 
   if (!file.is_open())
   {
     cout << "Failed to open file: " << mtlFileName << endl;
-    return material;
+    return materials;
   }
 
+  Material currentMaterial;
   string line;
+
   while (getline(file, line))
   {
     istringstream iss(line);
     string keyword;
     iss >> keyword;
+
     if (keyword == "newmtl")
     {
-      iss >> material.name;
+      // Every time we find a new material, we push the previous one
+      if (!currentMaterial.name.empty())
+      {
+        materials.push_back(currentMaterial);
+      }
+
+      currentMaterial = Material();
+      iss >> currentMaterial.name;
     }
     else if (keyword == "Ka")
     {
       float r, g, b;
       iss >> r >> g >> b;
-      material.ambient = glm::vec3(r, g, b);
+      currentMaterial.ambient = glm::vec3(r, g, b);
     }
     else if (keyword == "Ks")
     {
       float r, g, b;
       iss >> r >> g >> b;
-      material.specular = glm::vec3(r, g, b);
+      currentMaterial.specular = glm::vec3(r, g, b);
       // Kd and Ke are the same according to the MTL specification
     }
     else if (keyword == "Kd" || keyword == "Ke")
     {
       float r, g, b;
       iss >> r >> g >> b;
-      material.diffuse = glm::vec3(r, g, b);
+      currentMaterial.diffuse = glm::vec3(r, g, b);
     }
     else if (keyword == "map_Kd")
     {
       string fileName;
       iss >> fileName;
-      material.texturePath = assetsFolder + trim(fileName);
+      currentMaterial.texturePath = assetsFolder + trim(fileName);
     }
     else if (keyword == "Ns")
     {
       float shininess;
       iss >> shininess;
-      material.shininess = shininess;
+      currentMaterial.shininess = shininess;
     }
   }
 
+  // Needed to add the last material since no newmtl keyword is found
+  if (!currentMaterial.name.empty())
+  {
+    materials.push_back(currentMaterial);
+  }
+
+
   file.close();
-  return material;
+  return materials;
 }

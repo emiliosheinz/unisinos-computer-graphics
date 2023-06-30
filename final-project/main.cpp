@@ -29,8 +29,8 @@ using namespace std;
 #include "./utils/obj-utils.hpp"
 #include "./utils/animations-utils.hpp"
 
-const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
-const string OBJ_FILE_PATH = ASSETS_FOLDER + "SuzanneTriTextured.obj";
+const string ASSETS_FOLDER = "./assets/";
+const string OBJ_FILE_PATH = ASSETS_FOLDER + "Earth.obj";
 
 struct Geometry
 {
@@ -96,7 +96,8 @@ int main()
   glViewport(0, 0, width, height);
 
   ParsedObj parsedObj = parseOBJFile(OBJ_FILE_PATH);
-  Material material = readMTLFile(ASSETS_FOLDER, parsedObj.mtlFileName);
+  vector<Material> materials = readMTLFile(ASSETS_FOLDER, parsedObj.mtlFileName);
+  Material material = materials[0];
 
   Shader shader("./shaders/vertex-shader.vert", "./shaders/fragment-shader.frag");
 
@@ -149,7 +150,7 @@ int main()
     camera.update();
 
 		glm::vec3 pointOnCurve = bezier.getPointOnCurve(curentPointOnCurve);
-		suzanne.updatePosition(pointOnCurve);
+		// suzanne.updatePosition(pointOnCurve);
 		suzanne.update();
 		suzanne.draw();
 
