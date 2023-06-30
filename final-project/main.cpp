@@ -113,7 +113,7 @@ int main()
   camera.initialize(&shader, width, height);
   
   Mesh moon;
-  moon.initialize(VAO, verticesCount, &shader, textureId);
+  moon.initialize(VAO, verticesCount, &shader, textureId, glm::vec3(-1.0f,0.0f,0.0f), glm::vec3(0.3f,0.3f,0.3f));
 
   shader.setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
   shader.setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
@@ -151,7 +151,7 @@ int main()
     camera.update();
 
 		glm::vec3 pointOnCurve = bezier.getPointOnCurve(curentPointOnCurve);
-		// moon.updatePosition(pointOnCurve);
+		moon.updatePosition(pointOnCurve);
 		moon.update();
 		moon.draw();
 
