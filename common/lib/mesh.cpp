@@ -25,8 +25,13 @@ void Mesh::update()
 	shader->setMat4("model", glm::value_ptr(model));
 }
 
-void Mesh::draw()
+void Mesh::draw(Material material)
 {
+	shader->setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
+  shader->setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
+  shader->setVec3("ks", material.specular.r, material.specular.g, material.specular.b);
+  shader->setFloat("q", material.shininess);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glBindVertexArray(VAO);

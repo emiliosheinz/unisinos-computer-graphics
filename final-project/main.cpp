@@ -96,29 +96,33 @@ int main()
   glfwGetFramebufferSize(window, &width, &height);
   glViewport(0, 0, width, height);
 
-  ParsedObj parsedObj = parseOBJFile(MOON_OBJ_FILE_PATH);
-  vector<Material> materials = readMTLFile(ASSETS_FOLDER, parsedObj.mtlFileName);
-  Material material = materials[0];
-
   Shader shader("./shaders/vertex-shader.vert", "./shaders/fragment-shader.frag");
-
-  GLuint textureId = loadTexture(material.texturePath);
-  Geometry geometry = setupGeometry(parsedObj.vertices);
-
-  GLuint VAO = geometry.VAO;
-  int verticesCount = geometry.verticesCount;
 
   glUseProgram(shader.ID);
 
   camera.initialize(&shader, width, height);
-  
-  Mesh moon;
-  moon.initialize(VAO, verticesCount, &shader, textureId, glm::vec3(-1.0f,0.0f,0.0f), glm::vec3(0.3f,0.3f,0.3f));
 
-  shader.setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
-  shader.setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
-  shader.setVec3("ks", material.specular.r, material.specular.g, material.specular.b);
-  shader.setFloat("q", material.shininess);
+  ParsedObj parsedMoonObj = parseOBJFile(MOON_OBJ_FILE_PATH);
+  vector<Material> moonMaterials = readMTLFile(ASSETS_FOLDER, parsedMoonObj.mtlFileName);
+  Material moonMaterial = moonMaterials[0];
+  GLuint moonTextureId = loadTexture(moonMaterial.texturePath);
+  Geometry moonGeometry = setupGeometry(parsedMoonObj.vertices);
+  GLuint MOON_VAO = moonGeometry.VAO;
+  int moonVerticesCount = moonGeometry.verticesCount;
+
+  Mesh moon;
+  moon.initialize(MOON_VAO, moonVerticesCount, &shader, moonTextureId, glm::vec3(-1.0f,0.0f,0.0f), glm::vec3(0.1f,0.1f,0.1f));
+
+  ParsedObj parsedEarthObj = parseOBJFile(EARTH_OBJ_FILE_PATH);
+  vector<Material> earthMaterials = readMTLFile(ASSETS_FOLDER, parsedEarthObj.mtlFileName);
+  Material earthMaterial = earthMaterials[0];
+  GLuint earthTextureId = loadTexture(earthMaterial.texturePath);
+  Geometry earthGeometry = setupGeometry(parsedEarthObj.vertices);
+  GLuint EARTH_VAO = earthGeometry.VAO;
+  int earthVerticesCount = earthGeometry.verticesCount;
+
+  Mesh earth;
+  earth.initialize(EARTH_VAO, earthVerticesCount, &shader, earthTextureId, glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.2f,0.2f,0.2f));
 
   // Definindo as propriedades da fonte de luz
   shader.setVec3("lightPosition", 15.0f, 15.0f, 2.0f);
@@ -152,8 +156,12 @@ int main()
 
 		glm::vec3 pointOnCurve = bezier.getPointOnCurve(curentPointOnCurve);
 		moon.updatePosition(pointOnCurve);
+    
 		moon.update();
-		moon.draw();
+		moon.draw(moonMaterial);
+
+    earth.update();
+		earth.draw(earthMaterial);
 
     curentPointOnCurve = (curentPointOnCurve + 1) % nbCurvePoints;
 
@@ -161,7 +169,8 @@ int main()
   }
 
 
-  glDeleteVertexArrays(1, &VAO);
+  glDeleteVertexArrays(1, &MOON_VAO);
+  glDeleteVertexArrays(1, &EARTH_VAO);
   glfwTerminate();
   return 0;
 }

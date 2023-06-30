@@ -192,11 +192,6 @@ int main()
   Mesh suzanne;
   suzanne.initialize(VAO, verticesCount, &shader, textureId);
 
-  shader.setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
-  shader.setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
-  shader.setVec3("ks", material.specular.r, material.specular.g, material.specular.b);
-  shader.setFloat("q", material.shininess);
-
   // Definindo as propriedades da fonte de luz
   shader.setVec3("lightPosition", 15.0f, 15.0f, 2.0f);
   shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
@@ -230,7 +225,7 @@ int main()
 		glm::vec3 pointOnCurve = bezier.getPointOnCurve(i);
 		suzanne.updatePosition(pointOnCurve);
 		suzanne.update();
-		suzanne.draw();
+		suzanne.draw(material);
 
     i = (i + 1) % nbCurvePoints;
 
