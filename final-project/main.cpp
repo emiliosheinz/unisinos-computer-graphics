@@ -30,7 +30,8 @@ using namespace std;
 #include "./utils/animations-utils.hpp"
 
 const string ASSETS_FOLDER = "./assets/";
-const string OBJ_FILE_PATH = ASSETS_FOLDER + "Earth.obj";
+const string MOON_OBJ_FILE_PATH = ASSETS_FOLDER + "Moon.obj";
+const string EARTH_OBJ_FILE_PATH = ASSETS_FOLDER + "Earth.obj";
 
 struct Geometry
 {
@@ -95,7 +96,7 @@ int main()
   glfwGetFramebufferSize(window, &width, &height);
   glViewport(0, 0, width, height);
 
-  ParsedObj parsedObj = parseOBJFile(OBJ_FILE_PATH);
+  ParsedObj parsedObj = parseOBJFile(MOON_OBJ_FILE_PATH);
   vector<Material> materials = readMTLFile(ASSETS_FOLDER, parsedObj.mtlFileName);
   Material material = materials[0];
 
@@ -111,8 +112,8 @@ int main()
 
   camera.initialize(&shader, width, height);
   
-  Mesh suzanne;
-  suzanne.initialize(VAO, verticesCount, &shader, textureId);
+  Mesh moon;
+  moon.initialize(VAO, verticesCount, &shader, textureId);
 
   shader.setVec3("ka", material.ambient.r, material.ambient.g, material.ambient.b);
   shader.setVec3("kd", material.diffuse.r, material.diffuse.g, material.diffuse.b);
@@ -150,9 +151,9 @@ int main()
     camera.update();
 
 		glm::vec3 pointOnCurve = bezier.getPointOnCurve(curentPointOnCurve);
-		// suzanne.updatePosition(pointOnCurve);
-		suzanne.update();
-		suzanne.draw();
+		// moon.updatePosition(pointOnCurve);
+		moon.update();
+		moon.draw();
 
     curentPointOnCurve = (curentPointOnCurve + 1) % nbCurvePoints;
 
