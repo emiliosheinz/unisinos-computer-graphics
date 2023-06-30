@@ -27,7 +27,7 @@ using namespace std;
 #include "mesh.h"
 
 #include "./utils/obj-utils.hpp"
-#include "./utils/string-utils.hpp"
+#include "./utils/animations-utils.hpp"
 
 const string ASSETS_FOLDER = "../common/3d-models/suzanne/";
 const string OBJ_FILE_PATH = ASSETS_FOLDER + "SuzanneTriTextured.obj";
@@ -38,56 +38,26 @@ struct Geometry
   int verticesCount;
 };
 
-struct Vertex
-{
-  float x, y, z;
-};
-
-struct TextureCoord
-{
-  float s, t;
-};
-
-struct Normal
-{
-  float x, y, z;
-};
-
-struct Face
-{
-  std::vector<int> vertexIndices;
-  std::vector<int> textureCoordIndices;
-  std::vector<int> normalIndices;
-};
-
-struct ParsedObj
-{
-  std::vector<float> vertices;
-  std::string mtlFileName;
-};
-
-struct Material
-{
-  std::string name;
-  glm::vec3 ambient;
-  glm::vec3 diffuse;
-  glm::vec3 specular;
-  string texturePath;
-  float shininess;
-  int textureId;
-};
-
-ParsedObj parseOBJFile(const std::string &mtlPath);
-Material readMTLFile(const string &mtlFileName);
 Geometry setupGeometry(const std::vector<float> &vertices);
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 vector <glm::vec3> generateControlPointsSet(string path);
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
 const GLuint WIDTH = 1000, HEIGHT = 1000;
 
 Camera camera;
+
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode)
+{
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, GL_TRUE);
+
+  camera.move(window, key, action);
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	camera.rotate(window, xpos, ypos);
+}
 
 int main()
 {
@@ -126,7 +96,7 @@ int main()
   glViewport(0, 0, width, height);
 
   ParsedObj parsedObj = parseOBJFile(OBJ_FILE_PATH);
-  Material material = readMTLFile(parsedObj.mtlFileName);
+  Material material = readMTLFile(ASSETS_FOLDER, parsedObj.mtlFileName);
 
   Shader shader("./shaders/vertex-shader.vert", "./shaders/fragment-shader.frag");
 
@@ -152,14 +122,14 @@ int main()
   shader.setVec3("lightPosition", 15.0f, 15.0f, 2.0f);
   shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-  std::vector<glm::vec3> controlPoints = generateControlPointsSet("./animations/wave.txt");
+  std::vector<glm::vec3> controlPoints = generateControlPointsSet("wave");
 
   Bezier bezier;
 	bezier.setControlPoints(controlPoints);
 	bezier.setShader(&shader);
 	bezier.generateCurve(100);
 	int nbCurvePoints = bezier.getNbCurvePoints();
-	int i = 0;
+	int curentPointOnCurve = 0;
 
   glEnable(GL_DEPTH_TEST);
 
@@ -178,12 +148,12 @@ int main()
 
     camera.update();
 
-		glm::vec3 pointOnCurve = bezier.getPointOnCurve(i);
+		glm::vec3 pointOnCurve = bezier.getPointOnCurve(curentPointOnCurve);
 		suzanne.updatePosition(pointOnCurve);
 		suzanne.update();
 		suzanne.draw();
 
-    i = (i + 1) % nbCurvePoints;
+    curentPointOnCurve = (curentPointOnCurve + 1) % nbCurvePoints;
 
     glfwSwapBuffers(window);
   }
@@ -192,178 +162,6 @@ int main()
   glDeleteVertexArrays(1, &VAO);
   glfwTerminate();
   return 0;
-}
-
-// Função de callback de teclado - só pode ter uma instância (deve ser estática se
-// estiver dentro de uma classe) - É chamada sempre que uma tecla for pressionada
-// ou solta via GLFW
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode)
-{
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    glfwSetWindowShouldClose(window, GL_TRUE);
-
-  camera.move(window, key, action);
-}
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-	camera.rotate(window, xpos, ypos);
-}
-
-ParsedObj parseOBJFile(const std::string &filename)
-{
-  std::ifstream file(filename);
-  std::string line;
-  std::vector<Vertex> vertices;
-  std::vector<TextureCoord> textureCoords;
-  
-  std::vector<Normal> normals;
-  std::vector<Face> faces;
-  std::string mtlFileName;
-
-  while (std::getline(file, line))
-  {
-    std::istringstream iss(line);
-    std::string prefix;
-    iss >> prefix;
-
-    if (prefix == "mtllib")
-    {
-      iss >> mtlFileName;
-    }
-    else if (prefix == "v")
-    {
-      Vertex vertex;
-      iss >> vertex.x >> vertex.y >> vertex.z;
-      vertices.push_back(vertex);
-    }
-    else if (prefix == "vt")
-    {
-      TextureCoord texCoord;
-      iss >> texCoord.s >> texCoord.t;
-      textureCoords.push_back(texCoord);
-    }
-    else if (prefix == "vn")
-    {
-      Normal normal;
-      iss >> normal.x >> normal.y >> normal.z;
-      normals.push_back(normal);
-    }
-    else if (prefix == "f")
-    {
-      Face face;
-      std::string vertexString;
-
-      while (iss >> vertexString)
-      {
-        std::istringstream vss(vertexString);
-        std::string vertexIndexString, texCoordIndexString, normalIndexString;
-
-        std::getline(vss, vertexIndexString, '/');
-        std::getline(vss, texCoordIndexString, '/');
-        std::getline(vss, normalIndexString, '/');
-
-        face.vertexIndices.push_back(std::stoi(vertexIndexString) - 1);
-        if (!texCoordIndexString.empty())
-          face.textureCoordIndices.push_back(std::stoi(texCoordIndexString) - 1);
-        if (!normalIndexString.empty())
-          face.normalIndices.push_back(std::stoi(normalIndexString) - 1);
-      }
-
-      faces.push_back(face);
-    }
-  }
-
-  std::vector<float> result;
-
-  for (const Face &face : faces)
-  {
-    for (size_t i = 0; i < face.vertexIndices.size(); ++i)
-    {
-      const Vertex &vertex = vertices[face.vertexIndices[i]];
-      const TextureCoord &texture = textureCoords[face.textureCoordIndices[i]];
-      const Normal &normal = normals[face.normalIndices[i]];
-
-      result.push_back(vertex.x);
-      result.push_back(vertex.y);
-      result.push_back(vertex.z);
-
-      result.push_back(1);
-      result.push_back(0);
-      result.push_back(0);
-
-      result.push_back(texture.s);
-      result.push_back(texture.t);
-
-      result.push_back(normal.x);
-      result.push_back(normal.y);
-      result.push_back(normal.z);
-    }
-  }
-
-  ParsedObj parsedObj;
-  parsedObj.vertices = result;
-  parsedObj.mtlFileName = mtlFileName;
-
-  return parsedObj;
-}
-
-Material readMTLFile(const string &mtlFileName)
-{
-  Material material;
-  ifstream file(ASSETS_FOLDER + mtlFileName);
-
-  if (!file.is_open())
-  {
-    cout << "Failed to open file: " << mtlFileName << endl;
-    return material;
-  }
-
-  string line;
-  while (getline(file, line))
-  {
-    istringstream iss(line);
-    string keyword;
-    iss >> keyword;
-    if (keyword == "newmtl")
-    {
-      iss >> material.name;
-    }
-    else if (keyword == "Ka")
-    {
-      float r, g, b;
-      iss >> r >> g >> b;
-      material.ambient = glm::vec3(r, g, b);
-    }
-    else if (keyword == "Ks")
-    {
-      float r, g, b;
-      iss >> r >> g >> b;
-      material.specular = glm::vec3(r, g, b);
-      // Kd and Ke are the same according to the MTL specification
-    }
-    else if (keyword == "Kd" || keyword == "Ke")
-    {
-      float r, g, b;
-      iss >> r >> g >> b;
-      material.diffuse = glm::vec3(r, g, b);
-    }
-    else if (keyword == "map_Kd")
-    {
-      string fileName;
-      iss >> fileName;
-      material.texturePath = ASSETS_FOLDER + trim(fileName);
-    }
-    else if (keyword == "Ns")
-    {
-      float shininess;
-      iss >> shininess;
-      material.shininess = shininess;
-    }
-  }
-
-  file.close();
-  return material;
 }
 
 Geometry setupGeometry(const std::vector<float> &vertices)
@@ -418,22 +216,3 @@ Geometry setupGeometry(const std::vector<float> &vertices)
   };
 }
 
-vector<glm::vec3> generateControlPointsSet(string path)
-{
-	vector <glm::vec3> controlPoints;
-	string line;
-	ifstream configFile(path);
-
-	while (getline(configFile, line))
-	{
-		istringstream iss(line);
-
-		float x, y, z;
-		iss >> x >> y >> z;
-		controlPoints.push_back(glm::vec3(x, y, z));
-	}
-
-	configFile.close();
-
-	return controlPoints;
-}
