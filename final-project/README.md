@@ -4,6 +4,16 @@ Neste projeto são carregados dois OBJs, um representando a Lua e outro a Terra.
 
 <img src="./docs/universe.png" width="100%">
 
+## Compilar e executar
+
+No MacBook basta executar o comando abaixo para compilar e executar o projeto:
+
+```bash
+yarn start:mac
+```
+
+Em outros SOs como Windows é indicado utilizar o Visual Studio realizando a configuração adequada para realizar o include dos arquivos de cabeçalho e linkar as bibliotecas corretamente.
+
 ## OBJS
 
 Os `objs` são lidos pela função `parseOBJFile` que esta declarada no arquivo `obj-utils.hpp`. Além de ler o arquivo e fazer o parse de todos as informações referentes ao objeto, essa função também é responsável por triangularizar o objeto, ou seja, transformar todas as faces em triângulos.
