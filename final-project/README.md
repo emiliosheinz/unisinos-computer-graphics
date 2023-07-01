@@ -21,7 +21,11 @@ A curva paramétrica é definida no arquivo `animations/config.txt` e é lida pe
 A camera é controlada utilizando o mouse e o teclado. Para controlar a posição da camera é utilizado o teclado e para controlar a direção da camera é utilizado o mouse.
 
 W - Move a camera para frente
+
 A - Move a camera para esquerda
+
 S - Move a camera para trás
+
 D - Move a camera para direita
+
 Mouse - Controla a direção da camera
