@@ -10,17 +10,29 @@ void Mesh::initialize(GLuint VAO, int nVertices, Shader* shader, GLuint textureI
 	this->angle = angle;
 	this->axis = axis;
 	this->textureID = textureID;
+	this->shouldRotateY = false;
 }
 
 void Mesh::updatePosition(glm::vec3 position) {
 	this->position = position;
 }
 
+void Mesh::setShouldRotateY(bool shouldRotateY) {
+	this->shouldRotateY = shouldRotateY;
+}
+
 void Mesh::update()
 {
 	glm::mat4 model = glm::mat4(1);
 	model = glm::translate(model, position);
-	model = glm::rotate(model, glm::radians(angle), axis);
+	
+	if(shouldRotateY) {
+		this->angle += 0.001;
+		model = glm::rotate(model, this->angle, glm::vec3(0.0, 1.0, 0.0));
+	} else {
+		model = glm::rotate(model, angle, axis);
+	}
+		
 	model = glm::scale(model, scale);
 	shader->setMat4("model", glm::value_ptr(model));
 }

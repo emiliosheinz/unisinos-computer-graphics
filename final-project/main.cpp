@@ -112,6 +112,7 @@ int main()
 
   Mesh moon;
   moon.initialize(MOON_VAO, moonVerticesCount, &shader, moonTextureId, glm::vec3(-1.0f,0.0f,0.0f), glm::vec3(0.1f,0.1f,0.1f));
+  moon.setShouldRotateY(true);
 
   ParsedObj parsedEarthObj = parseOBJFile(EARTH_OBJ_FILE_PATH);
   vector<Material> earthMaterials = readMTLFile(ASSETS_FOLDER, parsedEarthObj.mtlFileName);
@@ -122,7 +123,8 @@ int main()
   int earthVerticesCount = earthGeometry.verticesCount;
 
   Mesh earth;
-  earth.initialize(EARTH_VAO, earthVerticesCount, &shader, earthTextureId, glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.2f,0.2f,0.2f));
+  earth.initialize(EARTH_VAO, earthVerticesCount, &shader, earthTextureId, glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.15f,0.15f,0.15f));
+  earth.setShouldRotateY(true);
 
   // Definindo as propriedades da fonte de luz
   shader.setVec3("lightPosition", 15.0f, 15.0f, 2.0f);

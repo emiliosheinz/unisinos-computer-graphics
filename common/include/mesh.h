@@ -17,6 +17,7 @@ public:
 	void update();
 	void draw(Material material);
 	void updatePosition(glm::vec3 position);
+	void setShouldRotateY(bool shouldRotateY);
 
 protected:
 	GLuint VAO; //Identificador do Vertex Array Object - Vértices e seus atributos
@@ -32,5 +33,7 @@ protected:
 	Shader* shader;
 
 	GLuint textureID;
+
+	bool shouldRotateY = false;
 };
 
