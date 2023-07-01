@@ -130,7 +130,7 @@ int main()
   shader.setVec3("lightPosition", 15.0f, 15.0f, 2.0f);
   shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-  std::vector<glm::vec3> controlPoints = generateControlPointsSet("wave");
+  std::vector<glm::vec3> controlPoints = generateControlPointsSet("config");
 
   Bezier bezier;
 	bezier.setControlPoints(controlPoints);
