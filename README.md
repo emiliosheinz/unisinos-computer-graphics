@@ -1,12 +1,22 @@
-# unisinos-computer-graphics
-🌌 Comprehensive resource for computer graphics related projects and coursework at Unisinos University.
+## 🌌 unisinos-computer-graphics
+ Comprehensive resource for computer graphics related projects and coursework at Unisinos University.
 
-## Projects
+## :computer: Projects
+- [Hello 2D](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-3d)
+- [3D Cubes](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/3d-cubes)
+- [3D from .obj](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/3d-obj)
+- [Hello Textures](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-textures)
+- [Hello Lighting](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-lighting)
+- [Hello Camera](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-camera)
+- [Hello Curves](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-curves)
+- [Final Project](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/final-project)
 
-- [hello-3d](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-3d)
-- [3d-cubes](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/3d-cubes)
-- [3d-obj](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/3d-obj)
-- [hello-textures](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-textures)
-- [hello-lighting](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-lighting)
-- [hello-camera](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-camera)
-- [hello-curves](https://github.com/emiliosheinz/unisinos-computer-graphics/tree/main/hello-curves)
+## :fire: Used technologies
+- C++
+- OpenGL
+- GLM
+- GLFW
+- Glad
+
+## :man: Contributors
+- [@emilioheinz](https://github.com/emiliosheinz)
