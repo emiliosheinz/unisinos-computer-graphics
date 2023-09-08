@@ -19,5 +19,5 @@
 - Glad
 
 ## :man: Contributors
-- [@emilioheinz](https://github.com/emiliosheinz)
+- [@emiliosheinz](https://github.com/emiliosheinz)
 - [@fumegalli](https://github.com/fumegalli)
