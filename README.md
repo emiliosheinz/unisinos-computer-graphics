@@ -17,7 +17,3 @@
 - GLM
 - GLFW
 - Glad
-
-## :man: Contributors
-- [@emiliosheinz](https://github.com/emiliosheinz)
-- [@fumegalli](https://github.com/fumegalli)
